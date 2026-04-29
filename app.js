@@ -110,7 +110,10 @@ form.onsubmit = async (e) => {
       wait,
       unit,
       nextDate: nextDate.toISOString(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      notified: false,
+      remindersEnabled: true,
+      lastNotifiedAt: null
     }
   );
 
@@ -224,7 +227,9 @@ function renderItem(user, data) {
       doc(db, "users", user.uid, "rewatches", id),
       {
         nextDate: newNextDate.toISOString(),
-        lastRewatchedAt: new Date().toISOString()
+        lastRewatchedAt: new Date().toISOString(),
+        notified: false,
+        lastNotifiedAt: null
       }
     );
   };
