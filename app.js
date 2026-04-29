@@ -58,12 +58,18 @@ onAuthStateChanged(auth, (user) => {
     signedIn.style.display = "block";
     signedOut.style.display = "none";
 
+    loginButton.style.display = "none";
+    logoutButton.style.display = "inline-block";
+
     loadRewatches(user);
   } else {
     signedIn.style.display = "none";
     signedOut.style.display = "block";
     userEl.textContent = "";
     list.innerHTML = "";
+
+    loginButton.style.display = "inline-block";
+    logoutButton.style.display = "none";
 
     if (unsubscribe) {
       unsubscribe();

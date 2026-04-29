@@ -138,3 +138,35 @@ hr {
   border-top: 1px solid var(--border);
   margin: 1.5rem 0;
 }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 2rem 0 1rem;
+}
+
+.topbar .title {
+  text-align: left;
+}
+
+.topbar .auth {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.topbar button {
+  white-space: nowrap;
+}
+
+.topbar .auth button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.topbar .auth button:hover {
+  background: #f1e7de;
+  color: var(--text);
+}

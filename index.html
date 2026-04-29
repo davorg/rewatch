@@ -8,9 +8,16 @@
 </head>
 
 <body>
-  <header>
-    <h1>How Long Until Rewatch?</h1>
-    <p>Track your comfort shows and know when they’re ready to rewatch.</p>
+  <header class="topbar">
+    <div class="title">
+      <h1>How Long Until Rewatch?</h1>
+      <p>Track your comfort shows and know when they’re ready.</p>
+    </div>
+
+    <div class="auth">
+      <button id="login" type="button">Sign in</button>
+      <button id="logout" type="button" style="display:none;">Sign out</button>
+    </div>
   </header>
 
   <main>
@@ -23,8 +30,6 @@
       <p>
         Signed in as <strong id="user"></strong>
       </p>
-
-      <button id="logout" type="button">Sign out</button>
 
       <hr>
 
