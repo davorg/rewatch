@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>How Long Until Rewatch?</title>
+</head>
+
+<body>
+  <header>
+    <h1>How Long Until Rewatch?</h1>
+    <p>Track your comfort shows and know when they’re ready to rewatch.</p>
+  </header>
+
+  <main>
+    <section id="signed-out">
+      <p>Sign in to start tracking your rewatches.</p>
+      <button id="login" type="button">Sign in with Google</button>
+    </section>
+
+    <section id="signed-in" style="display: none;">
+      <p>
+        Signed in as <strong id="user"></strong>
+      </p>
+
+      <button id="logout" type="button">Sign out</button>
+
+      <hr>
+
+      <section id="app">
+        <h2>Your rewatches</h2>
+
+        <form id="add-form">
+          <input id="title" placeholder="Show title (e.g. House)" required>
+
+          <input id="wait" type="number" value="3" min="1" required>
+
+          <select id="unit">
+            <option value="years">years</option>
+            <option value="months">months</option>
+          </select>
+
+          <button type="submit">Add</button>
+        </form>
+
+        <ul id="list"></ul>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
