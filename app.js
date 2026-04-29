@@ -129,52 +129,105 @@ function loadRewatches(user) {
   unsubscribe = onSnapshot(q, (snapshot) => {
     list.innerHTML = "";
 
-    snapshot.forEach((docSnapshot) => {
-      const data = docSnapshot.data();
-      const id = docSnapshot.id;
-
-      const li = document.createElement("li");
-
-      const next = new Date(data.nextDate);
-      const today = new Date();
-
-      const status =
-        next <= today
-          ? "✅ Ready to watch"
-          : `Available ${next.toDateString()}`;
-
-      li.innerHTML = `
-        <strong>${data.title}</strong><br>
-        ${status}<br>
-        <button type="button" class="rewatched">I rewatched this</button>
-        <button type="button" class="delete">Delete</button>
+    if (snapshot.empty) {
+      list.innerHTML = `
+        <li style="text-align:center; color: var(--muted);">
+          No rewatches yet.<br>
+          Add your first comfort show above ☝️
+        </li>
       `;
+      return;
+    }
 
-      li.querySelector(".rewatched").onclick = async () => {
-        const newNextDate = new Date();
+    const ready = [];
+    const upcoming = [];
 
-        if (data.unit === "years") {
-          newNextDate.setFullYear(newNextDate.getFullYear() + data.wait);
-        } else {
-          newNextDate.setMonth(newNextDate.getMonth() + data.wait);
-        }
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const next = new Date(data.nextDate);
 
-        await updateDoc(
-          doc(db, "users", user.uid, "rewatches", id),
-          {
-            nextDate: newNextDate.toISOString(),
-            lastRewatchedAt: new Date().toISOString()
-          }
-        );
-      };
-
-      li.querySelector(".delete").onclick = async () => {
-        await deleteDoc(
-          doc(db, "users", user.uid, "rewatches", id)
-        );
-      };
-
-      list.appendChild(li);
+      if (next <= new Date()) {
+        ready.push({ id: doc.id, ...data });
+      } else {
+        upcoming.push({ id: doc.id, ...data });
+      }
     });
+
+
+    if (ready.length) {
+      const header = document.createElement("li");
+      header.innerHTML = "<strong>Ready to watch</strong>";
+      list.appendChild(header);
+
+      ready.forEach(item => renderItem(user, item));
+    }
+
+    if (upcoming.length) {
+      const header = document.createElement("li");
+      header.innerHTML = "<strong>Coming up</strong>";
+      list.appendChild(header);
+
+      upcoming.forEach(item => renderItem(user, item));
+    }
+
   });
+}
+
+function timeUntil(date) {
+  const now = new Date();
+  const diffMs = date - now;
+
+  if (diffMs <= 0) return "now";
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
+
+  if (years > 0) return `in ${years} year${years > 1 ? "s" : ""}`;
+  if (months > 0) return `in ${months} month${months > 1 ? "s" : ""}`;
+  return `in ${days} day${days !== 1 ? "s" : ""}`;
+}
+
+function renderItem(user, data) {
+  const li = document.createElement("li");
+
+  const next = new Date(data.nextDate);
+
+  li.innerHTML = `
+    <strong>${data.title}</strong><br>
+    ${
+      next <= new Date()
+        ? "✅ Ready to watch"
+        : `Available <span title="${next.toDateString()}">${timeUntil(next)}</span>`
+    }
+    <br>
+    <button class="rewatched">I rewatched this</button>
+    <button class="delete">Delete</button>
+  `;
+
+  li.querySelector(".rewatched").onclick = async () => {
+    const newNextDate = new Date();
+
+    if (data.unit === "years") {
+      newNextDate.setFullYear(newNextDate.getFullYear() + data.wait);
+    } else {
+      newNextDate.setMonth(newNextDate.getMonth() + data.wait);
+    }
+
+    await updateDoc(
+      doc(db, "users", user.uid, "rewatches", id),
+      {
+        nextDate: newNextDate.toISOString(),
+        lastRewatchedAt: new Date().toISOString()
+      }
+    );
+  };
+
+  li.querySelector(".delete").onclick = async () => {
+    await deleteDoc(
+      doc(db, "users", user.uid, "rewatches", id)
+    );
+  };
+
+  list.appendChild(li);
 }
