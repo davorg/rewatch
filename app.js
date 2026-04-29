@@ -40,11 +40,16 @@ const signedOut = document.getElementById("signed-out");
 const signedIn = document.getElementById("signed-in");
 const userEl = document.getElementById("user");
 const loginButton = document.getElementById("login");
+const loginButton2 = document.getElementById("login2");
 const logoutButton = document.getElementById("logout");
 const form = document.getElementById("add-form");
 const list = document.getElementById("list");
 
 loginButton.onclick = () => {
+  signInWithPopup(auth, provider);
+};
+
+loginButton2.onclick = () => {
   signInWithPopup(auth, provider);
 };
 
@@ -96,6 +101,7 @@ form.onsubmit = async (e) => {
   }
 
   const nextDate = new Date();
+  const nextDateDay = nextDate.toISOString().slice(0, 10);
 
   if (unit === "years") {
     nextDate.setFullYear(nextDate.getFullYear() + wait);
@@ -103,13 +109,16 @@ form.onsubmit = async (e) => {
     nextDate.setMonth(nextDate.getMonth() + wait);
   }
 
+  const iso = nextDate.toISOString();
+
   await addDoc(
     collection(db, "users", user.uid, "rewatches"),
     {
       title,
       wait,
       unit,
-      nextDate: nextDate.toISOString(),
+      nextDate: iso,
+      nextDateDay: iso.slice(0, 10),
       createdAt: new Date().toISOString(),
       notified: false,
       remindersEnabled: true,
@@ -131,7 +140,7 @@ function loadRewatches(user) {
 
   const q = query(
     collection(db, "users", user.uid, "rewatches"),
-    orderBy("nextDate"),
+    orderBy("nextDateDay"),
     orderBy("title")
   );
 
@@ -223,10 +232,13 @@ function renderItem(user, data) {
       newNextDate.setMonth(newNextDate.getMonth() + data.wait);
     }
 
+    const iso = newNextDate.toISOString();
+
     await updateDoc(
       doc(db, "users", user.uid, "rewatches", id),
       {
-        nextDate: newNextDate.toISOString(),
+        nextDate: iso,
+        nextDateDay: iso.slice(0, 10),
         lastRewatchedAt: new Date().toISOString(),
         notified: false,
         lastNotifiedAt: null
@@ -236,7 +248,7 @@ function renderItem(user, data) {
 
   li.querySelector(".delete").onclick = async () => {
     await deleteDoc(
-      doc(db, "users", user.uid, "rewatches", id)
+      doc(db, "users", user.uid, "rewatches", data.id)
     );
   };
 
