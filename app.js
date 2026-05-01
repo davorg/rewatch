@@ -4,6 +4,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -13,7 +15,6 @@ import {
   collection,
   addDoc,
   query,
-  getDocs,
   onSnapshot,
   doc,
   updateDoc,
@@ -36,6 +37,25 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+getRedirectResult(auth).catch((error) => {
+  console.error("Redirect sign-in failed:", error);
+});
+
+function shouldUseRedirect() {
+  const ua = navigator.userAgent;
+
+  return /iPhone|iPad|iPod|Android/i.test(ua)
+    || /Telegram|FBAN|FBAV|Instagram|Line|Twitter/i.test(ua);
+}
+
+function signIn() {
+  if (shouldUseRedirect()) {
+    return signInWithRedirect(auth, provider);
+  }
+
+  return signInWithPopup(auth, provider);
+}
+
 const signedOut = document.getElementById("signed-out");
 const signedIn = document.getElementById("signed-in");
 const userEl = document.getElementById("user");
@@ -45,13 +65,11 @@ const logoutButton = document.getElementById("logout");
 const form = document.getElementById("add-form");
 const list = document.getElementById("list");
 
-loginButton.onclick = () => {
-  signInWithPopup(auth, provider);
-};
+loginButton.onclick = signIn;
 
-loginButton2.onclick = () => {
-  signInWithPopup(auth, provider);
-};
+if (loginButton2) {
+  loginButton2.onclick = signIn;
+}
 
 logoutButton.onclick = () => {
   signOut(auth);
@@ -101,7 +119,6 @@ form.onsubmit = async (e) => {
   }
 
   const nextDate = new Date();
-  const nextDateDay = nextDate.toISOString().slice(0, 10);
 
   if (unit === "years") {
     nextDate.setFullYear(nextDate.getFullYear() + wait);
@@ -133,7 +150,6 @@ form.onsubmit = async (e) => {
 let unsubscribe = null;
 
 function loadRewatches(user) {
-  // Clean up previous listener if it exists
   if (unsubscribe) {
     unsubscribe();
   }
@@ -171,7 +187,6 @@ function loadRewatches(user) {
       }
     });
 
-
     if (ready.length) {
       const header = document.createElement("li");
       header.innerHTML = "<strong>Ready to watch</strong>";
@@ -187,7 +202,6 @@ function loadRewatches(user) {
 
       upcoming.forEach(item => renderItem(user, item));
     }
-
   });
 }
 
@@ -206,6 +220,15 @@ function timeUntil(date) {
   return `in ${days} day${days !== 1 ? "s" : ""}`;
 }
 
+function formatDate(date) {
+  return date.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+}
+
 function renderItem(user, data) {
   const li = document.createElement("li");
 
@@ -216,7 +239,7 @@ function renderItem(user, data) {
     ${
       next <= new Date()
         ? "✅ Ready to watch"
-        : `Available <span title="${next.toDateString()}">${timeUntil(next)}</span>`
+        : `Available <span title="${formatDate(next)}">${timeUntil(next)}</span>`
     }
     <br>
     <button class="rewatched">I rewatched this</button>
@@ -235,7 +258,7 @@ function renderItem(user, data) {
     const iso = newNextDate.toISOString();
 
     await updateDoc(
-      doc(db, "users", user.uid, "rewatches", id),
+      doc(db, "users", user.uid, "rewatches", data.id),
       {
         nextDate: iso,
         nextDateDay: iso.slice(0, 10),
@@ -254,3 +277,4 @@ function renderItem(user, data) {
 
   list.appendChild(li);
 }
+
