@@ -41,17 +41,34 @@ getRedirectResult(auth).catch((error) => {
   console.error("Redirect sign-in failed:", error.code, error.message);
 });
 
-function shouldUseRedirect() {
-  const ua = navigator.userAgent;
+// Known in-app browsers that block popups. Update this list as needed.
+const IN_APP_BROWSER_RE = /Telegram|FBAN|FBAV|Instagram|Line|Twitter/i;
 
-  // iOS Safari blocks the cross-origin iframe that Firebase redirect auth relies on
-  // (due to Intelligent Tracking Prevention), so we use popup on iOS instead.
-  // Keep redirect only for Android and known in-app browsers where popups are blocked.
-  return /Android/i.test(ua)
-    || /Telegram|FBAN|FBAV|Instagram|Line|Twitter/i.test(ua);
+function isIOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function isInAppBrowser() {
+  return IN_APP_BROWSER_RE.test(navigator.userAgent);
+}
+
+function shouldUseRedirect() {
+  // Use redirect for Android (works reliably) and non-iOS in-app browsers where
+  // popups are blocked. iOS is excluded because ITP partitions sessionStorage,
+  // breaking redirect-based auth entirely.
+  return !isIOS() && (/Android/i.test(navigator.userAgent) || isInAppBrowser());
 }
 
 function signIn() {
+  // iOS in-app browsers (e.g. Telegram, Instagram) partition sessionStorage so
+  // neither signInWithRedirect nor signInWithPopup can complete the OAuth flow.
+  // Ask the user to open the page in Safari instead.
+  if (isIOS() && isInAppBrowser()) {
+    const msg = document.getElementById("open-in-safari-msg");
+    if (msg) msg.style.display = "block";
+    return;
+  }
+
   if (shouldUseRedirect()) {
     return signInWithRedirect(auth, provider);
   }
