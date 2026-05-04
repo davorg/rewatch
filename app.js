@@ -38,17 +38,37 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 getRedirectResult(auth).catch((error) => {
-  console.error("Redirect sign-in failed:", error);
+  console.error("Redirect sign-in failed:", error.code, error.message);
 });
 
-function shouldUseRedirect() {
-  const ua = navigator.userAgent;
+// Known in-app browsers that block popups. Update this list as needed.
+const IN_APP_BROWSER_RE = /Telegram|FBAN|FBAV|Instagram|Line|Twitter/i;
 
-  return /iPhone|iPad|iPod|Android/i.test(ua)
-    || /Telegram|FBAN|FBAV|Instagram|Line|Twitter/i.test(ua);
+function isIOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function isInAppBrowser() {
+  return IN_APP_BROWSER_RE.test(navigator.userAgent);
+}
+
+function shouldUseRedirect() {
+  // Use redirect for Android (works reliably) and non-iOS in-app browsers where
+  // popups are blocked. iOS is excluded because ITP partitions sessionStorage,
+  // breaking redirect-based auth entirely.
+  return !isIOS() && (/Android/i.test(navigator.userAgent) || isInAppBrowser());
 }
 
 function signIn() {
+  // iOS in-app browsers (e.g. Telegram, Instagram) partition sessionStorage so
+  // neither signInWithRedirect nor signInWithPopup can complete the OAuth flow.
+  // Ask the user to open the page in Safari instead.
+  if (isIOS() && isInAppBrowser()) {
+    const msg = document.getElementById("open-in-safari-msg");
+    if (msg) msg.style.display = "block";
+    return;
+  }
+
   if (shouldUseRedirect()) {
     return signInWithRedirect(auth, provider);
   }
