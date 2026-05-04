@@ -38,13 +38,16 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 getRedirectResult(auth).catch((error) => {
-  console.error("Redirect sign-in failed:", error);
+  console.error("Redirect sign-in failed:", error.code, error.message);
 });
 
 function shouldUseRedirect() {
   const ua = navigator.userAgent;
 
-  return /iPhone|iPad|iPod|Android/i.test(ua)
+  // iOS Safari blocks the cross-origin iframe that Firebase redirect auth relies on
+  // (due to Intelligent Tracking Prevention), so we use popup on iOS instead.
+  // Keep redirect only for Android and known in-app browsers where popups are blocked.
+  return /Android/i.test(ua)
     || /Telegram|FBAN|FBAV|Instagram|Line|Twitter/i.test(ua);
 }
 
